@@ -13,10 +13,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.lti.micro.movieservice.dto.MovieDto;
 import com.lti.micro.movieservice.dto.MovieExceptionDto;
+import com.lti.micro.movieservice.dto.MovieWithMultiplexDto;
 import com.lti.micro.movieservice.exceptions.DuplicateRecordFoundExeption;
 import com.lti.micro.movieservice.exceptions.NoRecordFoundException;
 import com.lti.micro.movieservice.services.IMovieService;
@@ -41,22 +43,42 @@ public class MovieController {
 	 * @param movieName
 	 * @return
 	 */
-	@GetMapping("/search/{movie_name}")
-	public ResponseEntity<List<MovieDto>> getMovie(@PathVariable String movieName){
-		List<MovieDto> foundMovies = movieService.getMovieByName(movieName);
+	@GetMapping("/search/{movieName}")
+	public ResponseEntity<List<MovieWithMultiplexDto>> getMovie(@PathVariable String movieName){
+		List<MovieWithMultiplexDto> foundMovies = movieService.getMovieByName(movieName);
+		if(foundMovies.size()==0){
+			throw new NoRecordFoundException("No records found");
+		}
+		return new ResponseEntity<List<MovieWithMultiplexDto>>(foundMovies, HttpStatus.OK);
+	}
+	
+	@GetMapping("/adminLogin")
+	public ResponseEntity<String> loginAsAdmin(@RequestParam String username, @RequestParam String password ){
+		System.out.println("Login called");
+		System.out.println(username + " " + password);
+		return new ResponseEntity<String>("Admin login successful", HttpStatus.OK);
+	}
+
+	/**
+	 * Get specific movie 
+	 * @param movieName
+	 * @return
+	 */
+	@GetMapping("/searchSync/{movieName}")
+	public ResponseEntity<List<MovieDto>> getMovieInstantly(@PathVariable String movieName){
+		List<MovieDto> foundMovies = movieService.getMovieStartingByName(movieName);
 		if(foundMovies.size()==0){
 			throw new NoRecordFoundException("No records found");
 		}
 		return new ResponseEntity<List<MovieDto>>(foundMovies, HttpStatus.OK);
 	}
-	
 	/**
 	 * Retrieve all movies
 	 * @return list of movie
 	 */
-	@GetMapping("/getAll")
-	public ResponseEntity<List<MovieDto>> getAllMovies() {
-		return new ResponseEntity<List<MovieDto>>(movieService.getAllMovies(), HttpStatus.OK);
+	@GetMapping("/admin/getAll")
+	public ResponseEntity<List<MovieWithMultiplexDto>> getAllMovies() {
+		return new ResponseEntity<List<MovieWithMultiplexDto>>(movieService.getAllMovies(), HttpStatus.OK);
 	}
 	
 	/**
@@ -64,9 +86,10 @@ public class MovieController {
 	 * @param newMovie
 	 * @return
 	 */
-	@PostMapping("/addMovie")
+	@PostMapping("/admin/addMovie")
 	public ResponseEntity<MovieDto> createMovie(@RequestBody MovieDto newMovie){
 		MovieDto insertedMovie = movieService.createMovie(newMovie);
+		System.out.println("Inserted Movie" + insertedMovie);
 		if(insertedMovie == null) {
 			throw new DuplicateRecordFoundExeption("Movie with same name and director already exits");
 		}
@@ -78,13 +101,13 @@ public class MovieController {
 	 * @param movieToDelete
 	 * @return
 	 */
-	@DeleteMapping("/removeMapping")
+	@DeleteMapping("/admin/removeMovie")
 	public ResponseEntity<String> removeMovie(@RequestBody MovieDto movieToDelete){
 		String returnedString = movieService.removeMovie(movieToDelete);
 		if(returnedString == null) {
-			return new ResponseEntity<String>("Record not found", HttpStatus.OK);
+			return new ResponseEntity<String>("Record not found", HttpStatus.NOT_FOUND);
 		}
-		return new ResponseEntity<String>(returnedString, HttpStatus.NOT_FOUND);
+		return new ResponseEntity<String>(returnedString, HttpStatus.OK);
 	}
 	
 	/**
@@ -92,7 +115,7 @@ public class MovieController {
 	 * @param movieToUpdate
 	 * @return
 	 */
-	@PostMapping("/updateMovie")
+	@PostMapping("/admin/updateMovie")
 	public ResponseEntity<Integer> updateMovie(@RequestBody MovieDto movieToUpdate) {
 		if( movieService.updateMovie(movieToUpdate) >0) {
 			return new ResponseEntity<Integer>(1, HttpStatus.OK);

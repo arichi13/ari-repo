@@ -1,25 +1,21 @@
-package com.lti.micro.movieservice.document;
+package com.lti.micro.movieservice.dto;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+import com.lti.micro.movieservice.document.MovieGenreType;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-@Document
 @Data
 @ToString
 @AllArgsConstructor
-public class Movie {
+@NoArgsConstructor
+public class MovieWithMultiplexDto {
 	
-	@Id
-	/*
-	 * Identifier for this movie
-	 */
 	private String movieId;
 	
 	/*
@@ -45,7 +41,11 @@ public class Movie {
 	/*
 	 * Release date of this movie
 	 */
-	private LocalDate releaseDate;
-	
+	private String releaseDate;
 
+	/*
+	 * list of multiplex where this movie is showing
+	 */
+	private List<MultiplexDto> allocatedMultiplexes;
+	
 }

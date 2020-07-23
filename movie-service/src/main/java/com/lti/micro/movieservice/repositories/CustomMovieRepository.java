@@ -1,6 +1,6 @@
 package com.lti.micro.movieservice.repositories;
 
-import com.lti.micro.movieservice.dto.MovieDto;
+import com.lti.micro.movieservice.dto.MovieWithMultiplexDto;
 
 public interface CustomMovieRepository {
 	
@@ -9,6 +9,6 @@ public interface CustomMovieRepository {
 	 * @param movie
 	 * @return 1 if updated successfully
 	 */
-	public int updateMovie(MovieDto movie);
+	public int updateMovie(MovieWithMultiplexDto movie);
 	
 }

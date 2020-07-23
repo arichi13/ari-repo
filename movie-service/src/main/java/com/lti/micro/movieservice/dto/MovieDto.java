@@ -7,12 +7,16 @@ import com.lti.micro.movieservice.document.MovieGenreType;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 @Data
 @ToString
 @AllArgsConstructor
+@NoArgsConstructor
 public class MovieDto {
+	
+	private String movieId;
 	
 	/*
 	 * 	Name of movie
@@ -37,11 +41,7 @@ public class MovieDto {
 	/*
 	 * Release date of this movie
 	 */
-	private LocalDateTime releaseDate;
+	private String releaseDate;
 
-	/*
-	 * list of multiplex where this movie is showing
-	 */
-	private List<MultiplexDto> allocatedMultiplexes;
-	
+
 }

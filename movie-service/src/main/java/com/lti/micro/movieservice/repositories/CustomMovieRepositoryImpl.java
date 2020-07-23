@@ -7,7 +7,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 
 import com.lti.micro.movieservice.document.Movie;
-import com.lti.micro.movieservice.dto.MovieDto;
+import com.lti.micro.movieservice.dto.MovieWithMultiplexDto;
 import com.mongodb.client.result.UpdateResult;
 
 public class CustomMovieRepositoryImpl implements CustomMovieRepository{
@@ -18,7 +18,7 @@ public class CustomMovieRepositoryImpl implements CustomMovieRepository{
 	 * {@inheritDoc}
 	 */
 	@Override
-	public int updateMovie(MovieDto movie) {
+	public int updateMovie(MovieWithMultiplexDto movie) {
 		Query queryMovie = new Query().addCriteria(Criteria.where("movieName").and("directorName").is(movie.getMovieName()));
 		
 		Update updateMovie = new Update()
