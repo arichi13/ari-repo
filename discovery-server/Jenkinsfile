@@ -1,0 +1,18 @@
+node{
+	def mvnHome
+	stage('Checkout'){
+		git url:'', branch: master
+		mvnHome = tool 'name given in jenkins maven tool ' 
+	}
+	
+	stage('Build'){
+		bat("/${mvnHome}\bin\mvn" clean package)
+	}
+	
+	stage('Image'){
+		
+	}
+	
+	stage('Trigger Next'){
+		build job : 'api-gateway-job'
+	}		
