@@ -1,6 +1,5 @@
 package com.lti.micro.multiplexservice.controllers;
 
-import java.util.Collections;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +37,16 @@ public class MultiplexController {
 	@Autowired
 	IMultiplexService multiplexService;
 	
+	
+	/**
+	 * Retrieve all movies
+	 * @return list of movie
+	 */
+	@GetMapping("/admin/getAll")
+	public ResponseEntity<List<MultiplexDto>> getAllMultiplexes() {
+		return new ResponseEntity<List<MultiplexDto>>(multiplexService.getAllMultiplexes(), HttpStatus.OK);
+	}
+	
 	/**
 	 * Get specific multiplex 
 	 * @param multiplexName
@@ -67,6 +76,20 @@ public class MultiplexController {
 	}
 	
 	/**
+	 * Get movie by name
+	 * @param movieName
+	 * @return
+	 */
+	@GetMapping("/searchById/{multiplexId}")
+	public ResponseEntity<MultiplexDto> getMovieById(@PathVariable String multiplexId){
+		MultiplexDto foundMultiplex = multiplexService.getMultiplexById(multiplexId);
+		if(foundMultiplex == null){
+			throw new NoRecordFoundException("No records found");
+		}
+		return new ResponseEntity<MultiplexDto>(foundMultiplex, HttpStatus.OK);
+	}
+	
+	/**
 	 * 
 	 * @param newMultiplex
 	 * @return
@@ -85,9 +108,9 @@ public class MultiplexController {
 	 * @param multiplexToDelete
 	 * @return
 	 */
-	@DeleteMapping("/admin/removeMultiplex")
-	public ResponseEntity<String> removeMultiplex(@RequestBody MultiplexDto multiplexToDelete){
-		String returnedString = multiplexService.removeMultiplex(multiplexToDelete);
+	@DeleteMapping("/admin/removeMultiplex/{multiplexId}")
+	public ResponseEntity<String> removeMultiplex(@PathVariable String multiplexId){
+		String returnedString = multiplexService.removeMultiplex(multiplexId);
 		if(returnedString == null) {
 			return new ResponseEntity<String>("Record not found", HttpStatus.NOT_FOUND);
 		}
@@ -128,9 +151,7 @@ public class MultiplexController {
 	@GetMapping("/getMultiplexForMovie/{movieId}")
 	public ResponseEntity<List<MultiplexDto>> getMultiplexesForMovie(@PathVariable String movieId){
 		List<MultiplexDto> multiplexList = multiplexService.getMultiplexForMovie(movieId);
-		if(multiplexList.size()==0){
-			return new ResponseEntity<List<MultiplexDto>>(Collections.emptyList(), HttpStatus.NOT_FOUND);
-		}
+		multiplexList.forEach(System.out::println);
 		return new ResponseEntity<List<MultiplexDto>>(multiplexList, HttpStatus.OK);
 		
 	}

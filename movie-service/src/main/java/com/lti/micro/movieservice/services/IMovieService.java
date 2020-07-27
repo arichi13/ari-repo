@@ -21,21 +21,21 @@ public interface IMovieService {
 	 * @param name movie name
 	 * @return movie dto if found, null otherwise
 	 */
-	public List<MovieWithMultiplexDto> getMovieByName(String name);
+	public List<MovieDto> getMovieByName(String name);
 	
 	/**
 	 * Removes the given movie name from movie records
 	 * @param name movie name
 	 * @return Removed movie's name
 	 */
-	public String removeMovie(MovieDto movieDto);
+	public String removeMovie(String movieId);
 	
 	/**
 	 * Update the record of the given movie 
 	 * @param movieDto the movie to update
 	 * @return successfully updated movie dto
 	 */
-	public int updateMovie (MovieDto movieDto);
+	public MovieDto updateMovie (MovieDto movieDto);
 	
 	/**
 	 * Create a new movie
@@ -49,6 +49,8 @@ public interface IMovieService {
 	 * @return movie dto if found, null otherwise
 	 */
 	public List<MovieDto> getMovieStartingByName(String name);
+
+	public MovieWithMultiplexDto getMovieById(String movieId);
 	
 	
 

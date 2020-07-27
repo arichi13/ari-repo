@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -21,6 +22,7 @@ import com.lti.micro.multiplexservice.document.Screen;
 import com.lti.micro.multiplexservice.dto.MultiplexDto;
 import com.lti.micro.multiplexservice.repositories.MultiplexRepository;
 import com.lti.micro.multiplexservice.repositories.ScreenRepository;
+import com.mongodb.client.result.UpdateResult;
 
 /**
  * Implementation class for all service methods  
@@ -49,7 +51,12 @@ public class MultiplexServiceImpl implements IMultiplexService {
 		ArrayList<MultiplexDto> listToReturn = new ArrayList<MultiplexDto>();
 		allMovies.forEach((multiplex) ->
 		{
-			listToReturn.add(new MultiplexDto(multiplex.getMultiplexId(), multiplex.getMultiplexName(), multiplex.getNumberOfScreens(), multiplex.getCity(), null));
+			List<Screen> screens = screenRepo.findByMultiplexId(multiplex.getMultiplexId());
+			List<String> screenNames = screens.stream().map(
+					(screen) -> {
+						return screen.getScreenName();	
+					}).collect(Collectors.toList());
+			listToReturn.add(new MultiplexDto(multiplex.getMultiplexId(), multiplex.getMultiplexName(), multiplex.getNumberOfScreens(), multiplex.getCity(), screenNames));
 		});
 		return listToReturn;
 		
@@ -66,6 +73,21 @@ public class MultiplexServiceImpl implements IMultiplexService {
 			listToReturn.add(new MultiplexDto(multiplex.getMultiplexId(), multiplex.getMultiplexName(), multiplex.getNumberOfScreens(), multiplex.getCity(), null));
 		});	
 		return listToReturn;
+	}
+	
+	@Override
+	public MultiplexDto getMultiplexById(String multiplexId) {
+		Optional<Multiplex> returnedMultiplex = multiplexRepo.findById(multiplexId);
+		if(returnedMultiplex.isPresent()){
+			Multiplex multiplex = returnedMultiplex.get();
+			List<Screen> screens = screenRepo.findByMultiplexId(multiplex.getMultiplexId());
+			List<String> screenNames = screens.stream().map(
+					(screen) -> {
+						return screen.getScreenName();	
+					}).collect(Collectors.toList());
+			return new MultiplexDto(multiplex.getMultiplexId(), multiplex.getMultiplexName(), multiplex.getNumberOfScreens(), multiplex.getCity(), screenNames);
+		}
+		return null;
 	}
 	
 	/**
@@ -90,19 +112,15 @@ public class MultiplexServiceImpl implements IMultiplexService {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public String removeMultiplex(MultiplexDto multiplexDto) {
+	public String removeMultiplex(String multiplexDto) {
 		System.out.println("remove called");
-		Optional<Multiplex> foundMultiplex = multiplexRepo.findByMultiplexIdAndMultiplexName(multiplexDto.getMultiplexId(), multiplexDto.getMultiplexName());
 		
-		Optional<String> removedMultiplex = foundMultiplex.map((multiplex) -> {
-			int deleted = screenRepo.deleteByMultiplexId(multiplexDto.getMultiplexId());
+			int deleted = screenRepo.deleteByMultiplexId(multiplexDto);
 			if(deleted > 0) {
-				multiplexRepo.delete(multiplex);
-				return multiplex.getMultiplexName();
+				multiplexRepo.deleteById(multiplexDto);
+				return "Movie deleted successfully";
 			}
 			return null;
-		});
-		return removedMultiplex.isPresent() ? multiplexDto.getMultiplexName() : null;	
 
 	}
 	
@@ -227,8 +245,15 @@ public class MultiplexServiceImpl implements IMultiplexService {
 	 */
 	@Override
 	public String removeAllotment(String movieId) {
-		int recordDeleted = screenRepo.deleteByMovieId(movieId);
-		return recordDeleted >0 ? "Records deleted" : null;
+		Query query = new Query();
+		query.addCriteria(Criteria.where("movieId").is(movieId));
+		Update update = new Update();
+		update.set("movieId", null);
+		UpdateResult screen = mongoTemplate.updateMulti(query, update, Screen.class);
+		
+		
+		//int recordDeleted = screenRepo.deleteByMovieId(movieId);
+		return "Records deleted";
 	}
 	
 }

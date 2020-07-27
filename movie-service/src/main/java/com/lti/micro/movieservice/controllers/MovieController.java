@@ -38,27 +38,43 @@ public class MovieController {
 	@Autowired
 	IMovieService movieService;
 	
-	/**
-	 * Get specific movie 
-	 * @param movieName
-	 * @return
-	 */
-	@GetMapping("/search/{movieName}")
-	public ResponseEntity<List<MovieWithMultiplexDto>> getMovie(@PathVariable String movieName){
-		List<MovieWithMultiplexDto> foundMovies = movieService.getMovieByName(movieName);
-		if(foundMovies.size()==0){
-			throw new NoRecordFoundException("No records found");
-		}
-		return new ResponseEntity<List<MovieWithMultiplexDto>>(foundMovies, HttpStatus.OK);
-	}
-	
 	@GetMapping("/adminLogin")
 	public ResponseEntity<String> loginAsAdmin(@RequestParam String username, @RequestParam String password ){
 		System.out.println("Login called");
 		System.out.println(username + " " + password);
 		return new ResponseEntity<String>("Admin login successful", HttpStatus.OK);
 	}
-
+	
+	/**
+	 * Get movie by name
+	 * @param movieName
+	 * @return
+	 */
+	@GetMapping("/searchById/{movieId}")
+	public ResponseEntity<MovieWithMultiplexDto> getMovieById(@PathVariable String movieId){
+		MovieWithMultiplexDto foundMovie = movieService.getMovieById(movieId);
+		if(foundMovie == null){
+			throw new NoRecordFoundException("No records found");
+		}
+		System.out.println("searchById" + foundMovie);
+		return new ResponseEntity<MovieWithMultiplexDto>(foundMovie, HttpStatus.OK);
+	}
+	
+	/**
+	 * Get movie by name
+	 * @param movieName
+	 * @return
+	 */
+	@GetMapping("/searchByName/{movieName}")
+	public ResponseEntity<List<MovieDto>> getMovie(@PathVariable String movieName){
+		List<MovieDto> foundMovies = movieService.getMovieByName(movieName);
+		if(foundMovies.size()==0){
+			throw new NoRecordFoundException("No records found");
+		}
+		return new ResponseEntity<List<MovieDto>>(foundMovies, HttpStatus.OK);
+	}
+	
+	
 	/**
 	 * Get specific movie 
 	 * @param movieName
@@ -101,9 +117,9 @@ public class MovieController {
 	 * @param movieToDelete
 	 * @return
 	 */
-	@DeleteMapping("/admin/removeMovie")
-	public ResponseEntity<String> removeMovie(@RequestBody MovieDto movieToDelete){
-		String returnedString = movieService.removeMovie(movieToDelete);
+	@DeleteMapping("/admin/removeMovie/{movieId}")
+	public ResponseEntity<String> removeMovie(@PathVariable String movieId){
+		String returnedString = movieService.removeMovie(movieId);
 		if(returnedString == null) {
 			return new ResponseEntity<String>("Record not found", HttpStatus.NOT_FOUND);
 		}
@@ -116,11 +132,12 @@ public class MovieController {
 	 * @return
 	 */
 	@PostMapping("/admin/updateMovie")
-	public ResponseEntity<Integer> updateMovie(@RequestBody MovieDto movieToUpdate) {
-		if( movieService.updateMovie(movieToUpdate) >0) {
-			return new ResponseEntity<Integer>(1, HttpStatus.OK);
+	public ResponseEntity<MovieDto> updateMovie(@RequestBody MovieDto movieToUpdate) {
+		MovieDto returnedDto = movieService.updateMovie(movieToUpdate);
+		if(returnedDto ==null) {
+			throw new NoRecordFoundException("No records found");
 		}
-		return new ResponseEntity<Integer>(0, HttpStatus.NOT_FOUND);
+		return new ResponseEntity<MovieDto>(returnedDto, HttpStatus.OK);
 	}
 	
 	/**

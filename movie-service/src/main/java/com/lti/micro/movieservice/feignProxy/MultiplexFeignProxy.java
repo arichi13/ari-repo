@@ -16,15 +16,15 @@ import com.lti.micro.movieservice.dto.MultiplexDto;
 import feign.FeignException;
 import feign.hystrix.FallbackFactory;
 
-@FeignClient(name="api-gateway", fallbackFactory = MultiplexFallbackFactory.class)
+@FeignClient(name="micro-multiplex", fallbackFactory = MultiplexFallbackFactory.class)
 @RibbonClient(name="micro-multiplex")
 public interface MultiplexFeignProxy {
 	
 
-	@GetMapping("micro-multiplex/multiplex-mgmt/getMultiplexForMovie/{movieId}")
+	@GetMapping("/multiplex-mgmt/getMultiplexForMovie/{movieId}")
 	public ResponseEntity<List<MultiplexDto>> getMultiplexesForMovie(@PathVariable("movieId") String movieId);
 	
-	@DeleteMapping("micro-multiplex/multiplex-mgmt/admin/removeAllotmentForMovie")
+	@DeleteMapping("/multiplex-mgmt/admin/removeAllotmentForMovie")
 	public ResponseEntity<String> removeAllotmentForMovie(@RequestBody String movieId);
 }
 

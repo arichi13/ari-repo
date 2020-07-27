@@ -18,8 +18,6 @@ public interface ScreenRepository extends MongoRepository<Screen, String> {
 
 
 	Optional<Screen> findByMultiplexIdAndScreenName(String multiplexId, String screenId);
-
-	List<String> findMultiplexIdByMovieId(String movieId);
 	
 	int deleteByMultiplexId(String multiplexId);
 	
@@ -28,5 +26,7 @@ public interface ScreenRepository extends MongoRepository<Screen, String> {
 	int deleteByMovieId(String movieId);
 
 	int deleteAllByMultiplexId(String multiplexId);
+
+	List<Screen> findByMovieId(String movieId);
 
 }

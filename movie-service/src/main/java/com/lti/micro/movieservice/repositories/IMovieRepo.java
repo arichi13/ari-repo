@@ -30,5 +30,5 @@ public interface IMovieRepo extends CrudRepository<Movie, String>, CustomMovieRe
 	 * @param movieName
 	 * @return found list of movies
 	 */
-	public List<Movie> findByMovieNameStartingWith(String movieName);
+	public List<Movie> findByMovieNameStartingWithIgnoreCase(String movieName);
 }

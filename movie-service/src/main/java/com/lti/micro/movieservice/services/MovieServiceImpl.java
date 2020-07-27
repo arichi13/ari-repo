@@ -48,7 +48,12 @@ public class MovieServiceImpl implements IMovieService {
 		ArrayList<MovieWithMultiplexDto> listToReturn = new ArrayList<MovieWithMultiplexDto>();
 		allMovies.forEach((movie) ->
 		{
-			listToReturn.add(new MovieWithMultiplexDto(movie.getMovieId(), movie.getMovieName(), movie.getMovieGenre(), movie.getDirectorName(), movie.getProducerName(), formatter.format(movie.getReleaseDate()), null));
+			ResponseEntity<List<MultiplexDto>> returnedMultiplexId = getMultiplexes(movie.getMovieId());
+			List<MultiplexDto> linkedMultiplexes = null;
+			if(returnedMultiplexId.getStatusCode().equals(HttpStatus.OK)) {
+				linkedMultiplexes = returnedMultiplexId.getBody();
+			}
+			listToReturn.add(new MovieWithMultiplexDto(movie.getMovieId(), movie.getMovieName(), movie.getMovieGenre(), movie.getDirectorName(), movie.getProducerName(), formatter.format(movie.getReleaseDate()), linkedMultiplexes));
 		});
 		return listToReturn;
 		
@@ -59,7 +64,7 @@ public class MovieServiceImpl implements IMovieService {
 	 */
 	@Override
 	public List<MovieDto> getMovieStartingByName(String name) {
-		List<Movie> returnedMovies = repo.findByMovieNameStartingWith(name);
+		List<Movie> returnedMovies = repo.findByMovieNameStartingWithIgnoreCase(name);
 		ArrayList<MovieDto> listToReturn = new ArrayList<MovieDto>();
 		returnedMovies.forEach((movie) -> {
 			listToReturn.add(new MovieDto(movie.getMovieId(), movie.getMovieName(), movie.getMovieGenre(), movie.getDirectorName(), movie.getProducerName(), formatter.format(movie.getReleaseDate())));
@@ -72,19 +77,15 @@ public class MovieServiceImpl implements IMovieService {
 	 */
 	@Override
 	
-	public List<MovieWithMultiplexDto> getMovieByName(String name) {
+	public List<MovieDto> getMovieByName(String name) {
 		List<Movie> returnedMovies = repo.findByMovieName(name);
-		ArrayList<MovieWithMultiplexDto> listToReturn = new ArrayList<MovieWithMultiplexDto>();
+		ArrayList<MovieDto> listToReturn = new ArrayList<MovieDto>();
 		returnedMovies.forEach((movie) -> {
-			ResponseEntity<List<MultiplexDto>> returnedMultiplexId = getMultiplexes(movie.getMovieId());
-			List<MultiplexDto> linkedMultiplexes = null;
-			if(returnedMultiplexId.getStatusCode().equals(HttpStatus.OK)) {
-				linkedMultiplexes = returnedMultiplexId.getBody();
-			}
-			listToReturn.add(new MovieWithMultiplexDto(movie.getMovieId(), movie.getMovieName(), movie.getMovieGenre(), movie.getDirectorName(), movie.getProducerName(), formatter.format(movie.getReleaseDate()), linkedMultiplexes));
+			listToReturn.add(new MovieDto(movie.getMovieId(), movie.getMovieName(), movie.getMovieGenre(), movie.getDirectorName(), movie.getProducerName(), formatter.format(movie.getReleaseDate())));
 		});	
 		return listToReturn;
 	}
+	
 	@HystrixCommand(fallbackMethod ="getFallbackMultiplex")
 	public ResponseEntity<List<MultiplexDto>> getMultiplexes(String movieId){
 		return multiplexProxy.getMultiplexesForMovie(movieId);
@@ -94,24 +95,40 @@ public class MovieServiceImpl implements IMovieService {
 		return new ResponseEntity<List<MultiplexDto>>(Collections.emptyList(), HttpStatus.OK);
 	}
 	
+	
+	@Override
+	public MovieWithMultiplexDto getMovieById(String movieId) {
+		Optional<Movie> foundmovie = repo.findById(movieId);
+		if(foundmovie.isPresent()) {
+			Movie movie = foundmovie.get();
+			ResponseEntity<List<MultiplexDto>> returnedMultiplexId = getMultiplexes(movieId);
+			List<MultiplexDto> linkedMultiplexes = null;
+			if(returnedMultiplexId.getStatusCode().equals(HttpStatus.OK)) {
+				linkedMultiplexes = returnedMultiplexId.getBody();
+			}
+			return new MovieWithMultiplexDto(movie.getMovieId(), movie.getMovieName(), movie.getMovieGenre(), movie.getDirectorName(), movie.getProducerName(), formatter.format(movie.getReleaseDate()), linkedMultiplexes);
+		}
+		return null;
+	}
+	
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
-	public String removeMovie(MovieDto movieDto) {
-		Optional<Movie> foundMovie = repo.findById(movieDto.getMovieId());
+	public String removeMovie(String movieId) {
+		Optional<Movie> foundMovie = repo.findById(movieId);
 		System.out.println("found movie " + foundMovie.isPresent());
 		Optional<String> removedMovie = foundMovie.map((movie) -> {
-			ResponseEntity<String> returnedResult = multiplexProxy.removeAllotmentForMovie(movie.getMovieId());
+			ResponseEntity<String> returnedResult = multiplexProxy.removeAllotmentForMovie(movieId);
 			if(returnedResult.getStatusCode().equals(HttpStatus.OK)) {
 				String removalResult = returnedResult.getBody();
 				repo.delete(movie);
 				System.out.println("allotment removed :" + removalResult);
-				return movieDto.getMovieName();
+				return movie.getMovieName();
 			}
 			return null;
 		});
-		return removedMovie.isPresent() ? movieDto.getMovieName() : null;	
+		return removedMovie.isPresent() ? removedMovie.get() : null;	
 
 	}
 	
@@ -119,19 +136,19 @@ public class MovieServiceImpl implements IMovieService {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public int updateMovie(MovieDto movieDto) {
+	public MovieDto updateMovie(MovieDto movieDto) {
 		Optional<Movie> foundMovie = repo.findById(movieDto.getMovieId());
 		System.out.println("found movie " + foundMovie.isPresent());
-		Optional<Integer> updateResult = foundMovie.map((movie) -> {
+		Optional<MovieDto> updateResult = foundMovie.map((movie) -> {
 			movie.setMovieName(movieDto.getMovieName());
 			movie.setDirectorName(movieDto.getDirectorName());
 			movie.setProducerName(movieDto.getProducerName());
 			movie.setMovieGenre(movieDto.getMovieGenre());
 			movie.setReleaseDate(LocalDate.parse(movieDto.getReleaseDate(), formatter));
-			repo.save(movie);
-			return 1;
+			Movie updatedMovie = repo.save(movie);
+			return new MovieDto(updatedMovie.getMovieId(), updatedMovie.getMovieName(), updatedMovie.getMovieGenre(), updatedMovie.getDirectorName(), updatedMovie.getProducerName(), formatter.format(updatedMovie.getReleaseDate()));
 		});
-		return updateResult.isPresent() ? 1 : 0;
+		return updateResult.isPresent() ? updateResult.get() : null;
 	}
 
 	/**
@@ -145,11 +162,13 @@ public class MovieServiceImpl implements IMovieService {
 			Movie insertedMovie = repo.save(new Movie(null, movieDto.getMovieName(), movieDto.getMovieGenre(), movieDto.getDirectorName(), movieDto.getProducerName(), LocalDate.parse(movieDto.getReleaseDate(), formatter)));
 			System.out.println("After save "+insertedMovie);
 			if(insertedMovie != null) {
-				return new MovieDto(insertedMovie.getMovieId(), insertedMovie.getMovieName(), movieDto.getMovieGenre(), movieDto.getDirectorName(), movieDto.getProducerName(), movieDto.getReleaseDate());
+				return new MovieDto(insertedMovie.getMovieId(), insertedMovie.getMovieName(), insertedMovie.getMovieGenre(), insertedMovie.getDirectorName(), insertedMovie.getProducerName(), formatter.format(insertedMovie.getReleaseDate()));
 			}
 		}
 		return null;
 	}
+
+	
 
 	
 	

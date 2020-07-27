@@ -28,7 +28,7 @@ public interface IMultiplexService {
 	 * @param name movie name
 	 * @return Removed movie's name
 	 */
-	public String removeMultiplex(MultiplexDto movieDto);
+	public String removeMultiplex(String multiplexId);
 	
 	/**
 	 * Update the record of the given movie 
@@ -80,6 +80,8 @@ public interface IMultiplexService {
 	 * @return
 	 */
 	public String removeAllotment(String movieId);
+
+	public MultiplexDto getMultiplexById(String multiplexId);
 	
 	
 

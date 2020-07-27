@@ -2,17 +2,17 @@ package com.lti.micro.movieservice.document;
 
 public enum MovieGenreType {
 	
-	COMEDY ,
+	Comedy ,
 	
-	THRILLER,
+	Thriller,
 	
-	HORROR ,
+	Horror ,
 	
-	ROMANTIC ,
+	Romantic ,
 	
-	ANIME,
+	Anime,
 	
-	BIOGRAPHY
+	Biography
 	
 	
 }
